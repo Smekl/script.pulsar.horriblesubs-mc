@@ -11,7 +11,7 @@ filters = common.Filtering()
 
 
 # using function from Steeve to add Provider's name and search torrent
-def extract_magnets(data):
+def extract_torrents(data):
     try:
         filters.information()  # print filters settings
         data = common.clean_html(data)
@@ -33,13 +33,12 @@ def extract_magnets(data):
 
 
 def search(query):
-    global filters
-    filters.title = query  # to do filtering by name
-    if settings.time_noti > 0: provider.notify(message="Searching: " + query.title() + '...', header=None, time=settings.time_noti, image=settings.icon)
-    url_search = "%s/lib/search.php?value=%s" % (settings.url,query.replace(' ','%20'))  # change in each provider
+    query += ' ' + settings.extra  # add the extra information
+    query = filters.type_filtering(query, '+')  # check type filter and set-up filters.title
+    url_search = "%s/lib/search.php?value=%s" % (settings.url,query)  # change in each provider
     provider.log.info(url_search)
     if browser.open(url_search):
-        results = extract_magnets(browser.content)
+        results = extract_torrents(browser.content)
     else:
         provider.log.error('>>>>>>>%s<<<<<<<' % browser.status)
         provider.notify(message=browser.status, header=None, time=5000, image=settings.icon)
@@ -52,9 +51,17 @@ def search_movie(info):
 
 
 def search_episode(info):
-    filters.use_TV()
-    query = common.clean(info['title']) + ' %02d' % info['absolute_number']  # define query
+    if info['absolute_number'] == 0:
+        query = info['title'].encode('utf-8') + ' s%02de%02d' % (info['season'], info['episode'])  # define query
+    else:
+        query = info['title'].encode('utf-8') + ' %02d' % info['absolute_number']  # define query anime
+    query += ' #TV&FILTER'  #to use TV filters
     return search(query)
+
 
 # This registers your module for use
 provider.register(search, search_movie, search_episode)
+
+del settings
+del browser
+del filters
