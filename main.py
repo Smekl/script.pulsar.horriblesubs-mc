@@ -15,10 +15,10 @@ def extract_torrents(data):
     try:
         filters.information()  # print filters settings
         data = common.clean_html(data)
-        lname = re.findall('.HorribleSubs.(.*?)<', data)  # list the names
+        #lname = re.findall('.HorribleSubs.(.*?)<', data)  # list the names
         cont = 0
-        for cm, magnet in enumerate(re.findall(r'magnet:\?[^\'"\s<>\[\]]+', data)):
-            name = lname[cm] + ' - ' + settings.name_provider
+        for name, magnet in re.findall('class="dl-label"><i>(.*?)</i>.*?a href="(magnet:.*?)"', data):
+            #name = lname[cm] + ' - ' + settings.name_provider
             if filters.verify(name, None):
                     yield {"name": name, "uri": magnet}  # return le torrent
                     cont += 1
